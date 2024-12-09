@@ -1,0 +1,507 @@
+---
+output: html_document
+---
+<div style="display: flex; align-items: center; justify-content: flex-start;">
+   <!-- Title on the left, big and bolded -->
+   <h1 style="font-size: 35px; font-weight: bold; line-height: 150px; margin: 0;">
+     Hypertension Overview and Insights
+   </h1>
+</div>
+
+## Prevalence and Contributing Factors 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+
+# Load the necessary libraries
+library(leaflet)
+library(htmltools)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(stringr)
+library(rnaturalearth)
+
+# Get the map of Saudi Arabia using 'rnaturalearth' package
+setwd("~/Desktop/web2/HealthDisparites")
+map <- ne_states(country = "Saudi Arabia", returnclass = "sf")
+
+# Adjust region names to match data
+map$name[1] = "Eastern Province"
+map$name[2] = "Northern Borders"
+map$name[3] = "Al Jawf"
+map$name[4] = "Najran"
+map$name[5] = "Asir"
+map$name[6] = "Jazan"
+map$name[7] = "Tabuk"
+map$name[8] = "Madinah"
+map$name[9] = "Makkah"
+map$name[10] = "Riyadh"
+map$name[11] = "Al Qassim"
+map$name[12] = "Ha'il"
+map$name[13] = "Al Bahah"
+
+# Set the correct projection
+map <- st_set_crs(map, 4326)
+
+# Replace the data reading from Excel with the new data.frame
+data <- data.frame(
+  region = c("Riyadh", "Makkah", "Madinah", "Al Qassim", "Eastern Province", "Asir", "Tabuk", 
+             "Ha'il", "Northern Borders", "Jazan", "Najran", "Al Bahah", "Al Jawf"),
+  Hypertension = c(209, 192, 23, 20, 99, 64, 14, 9, 5, 34, 19, 37, 8),
+ Total_Tobacco_Consumption = c(392, 273, 58, 14, 94, 60, 36, 23, 8, 34, 7, 15, 26),
+  Dyslipdemia = c(227, 165, 26, 16, 87, 53, 9, 9, 4, 21, 12, 30, 9),
+  Raised_Blood_Pressure = c(249, 291, 129, 95, 150, 135, 13, 17, 9, 29, 12, 16, 22),
+  WPM2.5 = c(49.00536, 51.86058, 48.01454, 44.14183, 47.32641, 39.71297, 26.44076, 34.035, 
+             31.05663, 45.1512, 54.90682, 40.56398, 25.87969)
+)
+
+# Ensure the data is ordered alphabetically by region name
+data <- data[order(data$region), ]
+
+# Merge the map data with the health data
+map <- left_join(map, data, by = c("name" = "region"))
+
+# Create a wrapped version of region names for better appearance
+map$name_wrapped <- str_wrap(map$name, width = 10)
+
+# Calculate centroids for label placement
+map_centroids <- st_centroid(map)
+
+# Define custom color palettes for each variable
+palette_Hypertension <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Hypertension,
+  na.color = "#D3D3D3"
+)
+palette_Total_Tobacco_Consumption <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Total_Tobacco_Consumption,
+  na.color = "#D3D3D3"
+)
+palette_Dyslipdemia <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Dyslipdemia,
+  na.color = "#D3D3D3"
+)
+palette_Raised_Blood_Pressure <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Raised_Blood_Pressure,
+  na.color = "#D3D3D3"
+)
+palette_WPM2.5 <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$WPM2.5,
+  na.color = "#D3D3D3"
+)
+
+# Function to create the interactive map
+create_map <- function(variable, palette) { 
+  leaflet(data = map) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      fillColor = ~palette(variable),
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+      label = ~paste0("Cases: ", round(variable, 2))  # Only show the value as "Cases"
+    )
+}
+
+# Create the maps with custom color palettes
+map_Hypertension <- create_map(map$Hypertension, palette_Hypertension)
+map_Total_Tobacco_Consumption <- create_map(map$Total_Tobacco_Consumption, palette_Total_Tobacco_Consumption)
+map_Dyslipdemia <- create_map(map$Dyslipdemia, palette_Dyslipdemia)
+map_Raised_Blood_Pressure <- create_map(map$Raised_Blood_Pressure, palette_Raised_Blood_Pressure)
+map_WPM2.5 <- create_map(map$WPM2.5, palette_WPM2.5)
+
+# Combine the maps in a grid layout with titles centered above each map
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: auto auto auto; gap: 20px; justify-items: center; padding: 20px; max-width: 80%; box-sizing: border-box;",
+      
+      # First row with 2 maps
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Hypertension"),
+        div(style = "width: 100%; height: 100%;", map_Hypertension)
+      ),
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Total Tobacco Consumption"),
+        div(style = "width: 100%; height: 100%;", map_Total_Tobacco_Consumption)
+      ),
+      
+      # Second row with 2 maps
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Dyslipdemia"),
+        div(style = "width: 100%; height: 100%;", map_Dyslipdemia)
+      ),
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Raised Blood Pressure"),
+        div(style = "width: 100%; height: 100%;", map_Raised_Blood_Pressure)
+      ),
+      
+      # Third row with WPM2.5 centered (same size as above maps)
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "WPM2.5"),
+        div(style = "width: 100%; height: 100%; max-width: 100%;", map_WPM2.5)
+      )
+    )
+  )
+)
+```
+- Higher rates in **Makkah, Riyadh, Eastern Province** due to urbanization.
+- **Madinah, Asir** show higher raised blood pressure, with **Asir** also showing high dyslipidemia.
+- WPM$_{2.5}$ pollution impacts urban regions more.
+
+## Summary Statistics and Demographic Trends
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Condition = "Hypertension",
+  N = 13,
+  Mean = 56.38,
+  Standard_Deviation = 69.097
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Descriptive Statistics of Hypertension Prevalence in Saudi Arabia, 2019"
+  ) %>%
+  cols_label(
+    Condition = "Condition",
+    N = "N",
+    Mean = "Mean",
+    Standard_Deviation = "Standard Deviation"
+  ) %>%
+  tab_source_note(
+    source_note = "Descriptive statistics of hypertension prevalence in Saudi Arabia, 2019."
+  )
+```
+- Mean prevalence: 56.38%, with high variability (SD: 69.10%).
+- 2030 projection: ~72.7 million cases.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(plotly)
+library(htmltools)
+
+# Define the dataset for Hypertension cases by Age
+hypertension_data <- data.frame(
+  Age = c("15-29", "30-44", "45-59", "60-69", "70-79", "80+"),
+  Hypertension = c(20, 188, 256, 164, 77, 28)
+)
+
+# Create bar chart for Hypertension Cases by Age
+hypertension_age_chart <- plot_ly(
+  data = hypertension_data,
+  x = ~Age,
+  y = ~Hypertension,
+  type = "bar",
+  marker = list(color = "#b4e0e2"),
+  hovertemplate = "Cases: %{y}<extra></extra>"  # Customize hover text
+) %>% layout(
+  title = "",  # Remove the title from the graph
+  xaxis = list(
+    title = list(text = "Age Group"),
+    tickfont = list(size = 12, color = "#4f6d7a")
+  ),
+  yaxis = list(
+    title = list(text = "Number of Cases"),
+    tickfont = list(size = 12, color = "#4f6d7a")
+  ),
+  width = 400,  # Adjust the width
+  height = 400  # Adjust the height of the bar chart
+)
+
+# Define the dataset for Gender and Hypertension cases
+gender_hypertension_data <- data.frame(
+  Gender = c("Male", "Female"),
+  Hypertension = c(366, 371)
+)
+
+# Create pie chart for Gender and Hypertension cases
+gender_hypertension_pie_chart <- plot_ly(
+  data = gender_hypertension_data,
+  labels = ~Gender,  # Labels for Male and Female
+  values = ~Hypertension,  # Values for the number of cases
+  type = "pie",
+  marker = list(colors = c("#b4e0e2", "#88c4cd")),  # Same colors as the bar chart
+  hovertemplate = "Cases: %{value}<extra></extra>",  # Show only the number of cases on hover
+  textinfo = "label",  # Only show labels (Male and Female), no numbers inside the pie
+  textposition = "inside"  # Position the text inside the pie chart slices
+) %>% layout(
+  title = "",  # No title on the graph
+  showlegend = FALSE,  # Hide the legend since the labels are already inside the pie chart
+  width = 400,  # Set the width of the pie chart
+  height = 400  # Adjust the height of the pie chart
+)
+
+# Display both charts next to each other with titles above
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: flex; justify-content: space-between; height: 500px; padding-top: 20px;",  # Adjust padding to add space above
+      # First chart (Bar chart for Hypertension Cases by Age)
+      div(
+        style = "width: 400px; height: 400px;",  # Set width and height for the first chart
+        div(
+          style = "font-weight: bold; text-align: center; margin: 0; padding: 10px 0; font-size: 17px;",  # Add padding to avoid overlap
+          "Hypertension Cases by Age"  # Title for the bar chart
+        ),
+        hypertension_age_chart  # Bar chart for Hypertension by Age
+      ),
+      # Second chart (Pie chart for Hypertension Cases by Gender)
+      div(
+        style = "width: 400px; height: 400px;",  # Set width and height for the second chart
+        div(
+          style = "font-weight: bold; text-align: center; margin: 0; padding: 10px 0; font-size: 17px;",  # Add padding to avoid overlap
+          "Hypertension Cases by Gender"  # Title for the pie chart
+        ),
+        gender_hypertension_pie_chart  # Pie chart for Hypertension by Gender
+      )
+    )
+  )
+)
+
+```
+- Highest prevalence in individuals aged 45–59, accounting for 34.9% of total cases.
+- The second highest prevalence is in the age group of 30–44, constituting 25.6%.
+- Gender distribution is nearly equal, with females slightly more affected (50.34%) than males (49.66%), indicating a balanced prevalence between genders.
+
+
+## Correlation Insights
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Factor = c("Raised Blood Pressure", "Dyslipidemia", "Total Tobacco Consumption", "WPM2.5"),
+  Pearson_Correlation = c("0.915**", "0.989**", "0.959**", "0.533"),
+  Sig_2_tailed = c("<0.001", "<0.001", "<0.001", "0.061"),
+  N = rep(13, 4)
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Pearson Correlation Coefficients Between Hypertension and Influencing Factors"
+  ) %>%
+  cols_label(
+    Factor = "Factors",
+    Pearson_Correlation = "Pearson Correlation",
+    Sig_2_tailed = "Sig. (2-tailed)",
+    N = "N"
+  ) %>%
+  tab_source_note(
+    source_note = "Pearson correlation coefficients between hypertension and influencing factors."
+  )
+```
+- Strong correlation with **dyslipidemia**, **total tobacco consumption**, and **raised blood pressure**.
+- Weaker correlation with **WPM$_{2.5}$** pollution.
+
+## Regression Insights: Fixed vs Random Effects
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Variable = c("β₀ (Intercept)", "β₁ (Raised Blood Pressure)", "β₂ (Dyslipidemia)", 
+               "β₃ (Total Tobacco Consumption)", "β₄ (WPM_{2.5})"),
+  Mean = c(-0.227, -0.005, 0.024, -0.010, 0.006),
+  Standard_Deviation = c(0.649, 0.002, 0.011, 0.006, 0.017),
+  Credible_Interval = c("(-1.524, 1.044)", "(-0.010, -0.001)", "(0.003, 0.046)", 
+                        "(-0.021, 0.001)", "(-0.027, 0.039)")
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Bayesian Posterior Inference for the Fixed Effects in the Hypertension Model"
+  ) %>%
+  cols_label(
+    Variable = "Fixed Effect",
+    Mean = "Mean",
+    Standard_Deviation = "Standard Deviation",
+    Credible_Interval = "95% Credible Interval"
+  ) %>%
+  tab_source_note(
+    source_note = "Bayesian posterior inference for the fixed effects in the hypertension model."
+  )
+
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Variable = c("τᵤ", "τᵥ"),
+  Mean = c(13.38, 22022.90),
+  Standard_Deviation = c(7.93, 24018.91),
+  Credible_Interval = c("(3.71, 33.75)", "(1477.05, 85802.84)")
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Bayesian Posterior Inference for the Random Effects in the Hypertension Model"
+  ) %>%
+  cols_label(
+    Variable = "Random Effect",
+    Mean = "Mean",
+    Standard_Deviation = "Standard Deviation",
+    Credible_Interval = "95% Credible Interval"
+  ) %>%
+  tab_source_note(
+    source_note = "Bayesian posterior inference for the random effects in the hypertension model."
+  )
+```
+- Strong positive association with **dyslipidemia**.
+- Unexpected negative coefficient for **raised blood pressure** due to multicollinearity.
+- Non-significant effects from **tobacco consumption** and **WPM$_{2.5}$**.
+
+## Risk Mapping and Statistical Insights
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+
+# Load the necessary libraries
+library(leaflet)
+library(dplyr)
+library(sf)
+library(rnaturalearth)
+
+# Define the data
+map_data <- data.frame(
+  name = c("Al Bahah", "Al Jawf", "Al Qassim", "Asir", "Eastern Province", 
+           "Ha'il", "Jazan", "Madinah", "Makkah", "Najran", 
+           "Northern Borders", "Riyadh", "Tabuk"),
+  RR = c(3.6331414, 0.6800362, 0.6649698, 1.3338994, 0.9059756, 
+         0.6910807, 1.1216576, 0.5023561, 0.9971489, 1.4107888, 
+         0.7179243, 1.0816824, 0.6920513),
+  EP = c(0.999999574, 0.024306335, 0.002595908, 0.940361074, 0.020938229, 
+         0.006844533, 0.519099637, 0.000000000, 0.078707269, 0.845156474, 
+         0.037178043, 0.389382451, 0.015469681),
+  structured_effects = c(0.78884951, -0.17246395, -0.17746242, 0.35019938, -0.46516227, 
+                         -0.24692771, 0.07125519, -0.08624193, 0.32013471, 0.08125834, 
+                         -0.28218977, -0.08500922, -0.09632904),
+  unstructured_effects = c(5.308909e-04, 4.771292e-05, -7.299286e-05, 3.320351e-04, -6.480097e-04, 
+                           -2.982545e-04, -2.942485e-04, -8.681237e-05, 3.355520e-04, 2.412804e-04, 
+                           -8.425617e-05, -1.060222e-04, 1.048004e-04)
+)
+# Get the map of Saudi Arabia using the 'rnaturalearth' package
+map <- ne_states(country = "Saudi Arabia", returnclass = "sf")
+
+# Adjust region names to match data
+map$name[1] = "Eastern Province"
+map$name[2] = "Northern Borders"
+map$name[3] = "Al Jawf"
+map$name[4] = "Najran"
+map$name[5] = "Asir"
+map$name[6] = "Jazan"
+map$name[7] = "Tabuk"
+map$name[8] = "Madinah"
+map$name[9] = "Makkah"
+map$name[10] = "Riyadh"
+map$name[11] = "Al Qassim"
+map$name[12] = "Ha'il"
+map$name[13] = "Al Bahah"
+
+# Set the correct projection
+map <- st_set_crs(map, 4326)
+
+# Merge the map data with the new data
+map <- left_join(map, map_data, by = c("name" = "name"))
+
+# Create custom color palettes for each variable
+palette_rr <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$RR,
+  na.color = "#D3D3D3"
+)
+
+palette_ep <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$EP,
+  na.color = "#D3D3D3"
+)
+
+palette_structured_effect <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$structured_effect,
+  na.color = "#D3D3D3"
+)
+
+palette_unstructured_effect <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$unstructured_effect,
+  na.color = "#D3D3D3"
+)
+
+# Function to create the interactive map
+# Function to create the interactive map without the legend
+create_map_no_legend <- function(variable, palette, title) {
+  leaflet(data = map) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      fillColor = ~palette(variable),
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+      label = ~paste0(title, ": ", round(variable, 2))
+    )
+}
+
+# Create maps for each variable without the legend
+map_rr_no_legend <- create_map_no_legend(map$RR, palette_rr, "RR")
+map_ep_no_legend <- create_map_no_legend(map$EP, palette_ep, "EP")
+map_structured_effect_no_legend <- create_map_no_legend(map$structured_effect, palette_structured_effect, "Structured Effect")
+map_unstructured_effect_no_legend <- create_map_no_legend(map$unstructured_effect, palette_unstructured_effect, "Unstructured Effect")
+
+# Combine the maps in a grid layout with titles centered above each map
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; justify-items: center; padding: 20px; max-width: 80%; box-sizing: border-box;",
+      # Title and map for RR
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "RR"),
+        div(style = "width: 100%; height: 100%;", map_rr_no_legend)
+      ),
+      # Title and map for EP
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "EP"),
+        div(style = "width: 100%; height: 100%;", map_ep_no_legend)
+      ),
+      # Title and map for Structured Effect
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Structured Effect"),
+        div(style = "width: 100%; height: 100%;", map_structured_effect_no_legend)
+      ),
+      # Title and map for Unstructured Effect
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Unstructured Effect"),
+        div(style = "width: 100%; height: 100%;", map_unstructured_effect_no_legend)
+      )
+    )
+  )
+)
+```
+- **Al Bahah** shows high risk, while **Madinah**, **Northern Borders**, and **Al Qassim** show lower risk.
+- **Ep**: Regions like **Makkah**, **Eastern Province**, and **Riyadh** show clustering of high-risk areas.
+- **Structured random effects** show minimal impact, while **unstructured random effects** suggest lifestyle factors are key.

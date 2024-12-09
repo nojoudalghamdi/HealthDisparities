@@ -1,0 +1,91 @@
+/* Ensure the navbar layout remains intact and show the logo */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space out the items between logo and names */
+    height: 115px; /* Adjust the navbar height */
+    background: linear-gradient(90deg, var(--color-lightest), var(--color-medium)); /* Navbar gradient */
+    border-bottom: 4px solid #88c4cd; /* Adjust the border color here */
+}
+
+/* Resize the logo to fit within the header */
+.navbar .logo {
+    display: block; /* Ensure the image is displayed */
+    height: 60px; /* Adjust logo size to fit within header */
+    margin-right: 20px; /* Space between the logo and the text */
+}
+
+/* Navbar links and alignment */
+.navbar a {
+    color: white; /* White links for good contrast */
+    padding: 0 15px; /* Add horizontal padding to the links */
+    display: flex;
+    align-items: center; /* Center the links vertically with the logo */
+    text-decoration: none; /* Remove underline */
+}
+
+.navbar a:hover {
+    color: var(--color-lighter); /* Slightly lighter color on hover */
+}
+
+/* New styling for the names on the right side of the header */
+.navbar::after {
+    content: "Nojoud Alghamdi ~ Lara Tazi ~ Sally Alkhambashi"; /* Add the names here */
+    display: flex;
+    flex-direction: column; /* Arrange the names vertically */
+    align-items: center; /* Center the names horizontally */
+    justify-content: center; /* Vertically center the names */
+    margin-left: 20px; /* Add spacing between links and names */
+    font-size: 14px; /* Smaller font size for the names */
+    color: #4f6d7a; /* Set the text color to #4f6d7a */
+    position: absolute; /* Make sure the names are positioned correctly */
+    right: 20px; /* Position names on the right */
+    top: 50%; /* Vertically center the names */
+    transform: translateY(-50%); /* Adjust centering */
+    text-align: center; /* Ensure the text is centered */
+    line-height: 1.5; /* Space between the names */
+}
+
+/* Color variables */
+:root {
+    --color-lightest: #f2f8fa;
+    --color-lighter: #b4e0e2;
+    --color-medium: #88c4cd;
+    --color-dark: #73b2b5;
+    --text-color: #4f6d7a;
+}
+
+/* Body styling */
+body {
+    background-color: var(--color-lightest); /* Lightest color for the page background */
+    color: #4f6d7a; /* Text color for contrast */
+}
+
+/* Heading styling */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--color-dark); /* Darker color for headings */
+}
+
+/* Button styling */
+.btn {
+    background-color: var(--color-medium); /* Button background */
+    color: white; /* Button text */
+    border: 1px solid var(--color-dark); /* Button border */
+}
+
+.btn:hover {
+    background-color: var(--color-dark); /* Darker color for hover effect */
+    border-color: var(--color-lighter);
+}
+
+/* Footer styling */
+footer {
+    background-color: var(--color-dark); /* Footer with darker shade */
+    color: white;
+    padding: 15px;
+    text-align: center;
+}
+
+footer {
+    background: linear-gradient(180deg, var(--color-dark), var(--color-medium));
+}

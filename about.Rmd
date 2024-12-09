@@ -1,0 +1,529 @@
+---
+output: html_document
+---
+<div style="display: flex; align-items: center; justify-content: flex-start;">
+   <!-- Title on the left, big and bolded -->
+   <h1 style="font-size: 35px; font-weight: bold; line-height: 150px; margin: 0;">
+     Diabetes Overview and Insights
+   </h1>
+</div>
+
+## Prevalence and Contributing Factors 
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+
+#setwd("~/Desktop/web2/HealthDisparites")
+# Load the necessary libraries
+library(leaflet)
+library(htmltools)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(stringr)
+library(rnaturalearth)
+
+# Get the map of Saudi Arabia using 'rnaturalearth' package
+setwd("~/Desktop/a/nojoudalghamdi")
+map <- ne_states(country = "Saudi Arabia", returnclass = "sf")
+
+# Adjust region names to match data
+map$name[1] = "Eastern Province"
+map$name[2] = "Northern Borders"
+map$name[3] = "Al Jawf"
+map$name[4] = "Najran"
+map$name[5] = "Asir"
+map$name[6] = "Jazan"
+map$name[7] = "Tabuk"
+map$name[8] = "Madinah"
+map$name[9] = "Makkah"
+map$name[10] = "Riyadh"
+map$name[11] = "Al Qassim"
+map$name[12] = "Ha'il"
+map$name[13] = "Al Bahah"
+
+# Set the correct projection
+map <- st_set_crs(map, 4326)
+
+# Replace the data reading from Excel with the new data.frame
+data <- data.frame(
+  region = c("Riyadh", "Makkah", "Madinah", "Al Qassim", "Eastern Province", "Asir", "Tabuk", 
+             "Ha'il", "Northern Borders", "Jazan", "Najran", "Al Bahah", "Al Jawf"),
+  Diabetes = c(195, 194, 30, 24, 110, 57, 18, 8, 3, 27, 15, 40, 8),
+  Abnormal_WHR = c(1666, 1505, 511, 292, 839, 550, 229, 153, 58, 283, 180, 105, 129),
+  Dyslipdemia = c(227, 165, 26, 16, 87, 53, 9, 9, 4, 21, 12, 30, 9),
+  Elevated_Glucose = c(345, 378, 63, 42, 96, 36, 75, 13, 1, 43, 14, 24, 3),
+  Insufficient_Diet_and_Exercise = c(4193, 3904, 1162, 669, 1915, 1127, 455, 337, 141, 701, 344, 246, 264),
+  High_BMI = c(1241, 992, 306, 212, 681, 380, 177, 82, 38, 171, 115, 102, 106)
+)
+
+# Ensure the data is ordered alphabetically by region name
+data <- data[order(data$region), ]
+
+# Merge the map data with the health data
+map <- left_join(map, data, by = c("name" = "region"))
+
+# Create a wrapped version of region names for better appearance
+map$name_wrapped <- str_wrap(map$name, width = 10)
+
+# Calculate centroids for label placement
+map_centroids <- st_centroid(map)
+
+# Define custom color palettes for each variable
+palette_diabetes <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Diabetes,
+  na.color = "#D3D3D3"
+)
+palette_blood_glucose <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Elevated_Glucose,
+  na.color = "#D3D3D3"
+)
+palette_bmi <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$High_BMI,
+  na.color = "#D3D3D3"
+)
+palette_diet_exercise <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Insufficient_Diet_and_Exercise,
+  na.color = "#D3D3D3"
+)
+palette_whr <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Abnormal_WHR,
+  na.color = "#D3D3D3"
+)
+palette_dyslipidemia <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$Dyslipdemia,
+  na.color = "#D3D3D3"
+)
+
+# Function to create the interactive map
+create_map <- function(variable, palette) { 
+  leaflet(data = map) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      fillColor = ~palette(variable),
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+      label = ~paste0("Cases: ", round(variable, 2))  # Only show the value as "Cases"
+    )
+}
+
+# Create the maps with custom color palettes
+map_diabetes <- create_map(map$Diabetes, palette_diabetes)
+map_blood_glucose <- create_map(map$Elevated_Glucose, palette_blood_glucose)
+map_bmi <- create_map(map$High_BMI, palette_bmi)
+map_diet_exercise <- create_map(map$Insufficient_Diet_and_Exercise, palette_diet_exercise)
+map_whr <- create_map(map$Abnormal_WHR, palette_whr)
+map_dyslipidemia <- create_map(map$Dyslipdemia, palette_dyslipidemia)
+
+# Combine the maps in a grid layout with titles centered above each map
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); gap: 20px; justify-items: center; padding: 20px; max-width: 80%; box-sizing: border-box;",
+      # Title and map for Diabetes
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Diabetes"),
+        div(style = "width: 100%; height: 100%;", map_diabetes)
+      ),
+      # Title and map for Elevated Blood Glucose
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Elevated Blood Glucose"),
+        div(style = "width: 100%; height: 100%;", map_blood_glucose)
+      ),
+      # Title and map for High BMI
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "High BMI"),
+        div(style = "width: 100%; height: 100%;", map_bmi)
+      ),
+      # Title and map for Insufficient Diet and Exercise
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Insufficient Diet and Exercise"),
+        div(style = "width: 100%; height: 100%;", map_diet_exercise)
+      ),
+      # Title and map for Abnormal WHR
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Abnormal WHR"),
+        div(style = "width: 100%; height: 100%;", map_whr)
+      ),
+      # Title and map for Dyslipidemia
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Dyslipidemia"),
+        div(style = "width: 100%; height: 100%;", map_dyslipidemia)
+      )
+    )
+  )
+)
+
+# cd ~/Desktop/web/HealthDisparites
+# git init
+# git add .
+# git commit -m "first"
+# git push -u origin main
+
+```
+- High prevalence in **Makkah, Riyadh, Eastern Province** due to urbanization, sedentary lifestyles, and poor diet.
+- **Madinah, Asir, Al Qassim** show elevated rates from poor diet, lack of exercise, and abnormal WHR.
+- Regions like **Tabuk** and **Madinah** show high blood glucose, and **Asir** has high BMI.
+<br>
+
+## Summary Statistics and Demographic Trends
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+table_data <- data.frame(
+  Condition = "Diabetes",
+  N = 13,
+  Mean = 56.08,
+  `Standard Deviation` = 67.467
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(title = "Descriptive Statistics") %>%
+  tab_source_note(
+    source_note = "Descriptive statistics of diabetes prevalence in Saudi Arabia, 2019."
+  )
+```
+- Mean prevalence: 56.08%, with high variability (SD: 67.47%).
+- 2030 projection: ~72.3 million cases in Saudi Arabia.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+
+library(plotly)
+library(htmltools)
+
+# Define the dataset for Diabetes cases by Age
+diabetes_data <- data.frame(
+  Age = c("15-29", "30-44", "45-59", "60-69", "70-79", "80+"),
+  Diabetes = c(60, 165, 247, 166, 69, 21)
+)
+
+# Create bar chart with hover displaying only the number of cases and no title on the graph
+diabetes_chart <- plot_ly(
+  data = diabetes_data,
+  x = ~Age,
+  y = ~Diabetes,
+  type = "bar",
+  marker = list(color = "#b4e0e2"),
+  hovertemplate = "Cases: %{y}<extra></extra>"  # Customize hover text
+) %>% layout(
+  title = "",  # Remove the title from the graph
+  xaxis = list(
+    title = list(text = "Age Group"),
+    tickfont = list(size = 12, color = "#4f6d7a")
+  ),
+  yaxis = list(
+    title = list(text = "Number of Cases"),
+    tickfont = list(size = 12, color = "#4f6d7a")
+  ),
+  width = 400,  # Adjust the width
+  height = 400  # Adjust the height of the bar chart
+)
+
+# Define the dataset for Gender and Diabetes cases
+gender_diabetes_data <- data.frame(
+  Gender = c("Male", "Female"),
+  Diabetes = c(408, 321)
+)
+
+# Create pie chart for Gender and Diabetes cases
+gender_diabetes_pie_chart <- plot_ly(
+  data = gender_diabetes_data,
+  labels = ~Gender,  # Labels for Male and Female
+  values = ~Diabetes,  # Values for the number of cases
+  type = "pie",
+  marker = list(colors = c("#b4e0e2", "#88c4cd")),  # Same colors as the bar chart
+  hovertemplate = "Cases: %{value}<extra></extra>",  # Show only the number of cases on hover
+  textinfo = "label",  # Only show labels (Male and Female), no numbers inside the pie
+  textposition = "inside"  # Position the text inside the pie chart slices
+) %>% layout(
+  title = "",  # No title on the graph
+  showlegend = FALSE,  # Hide the legend since the labels are already inside the pie chart
+  width = 400,  # Set the width of the pie chart
+  height = 400  # Adjust the height of the pie chart
+)
+
+# Display both charts next to each other with titles above
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: flex; justify-content: space-between; height: 500px; padding-top: 20px;",  # Adjust padding to add space above
+      # First chart (Bar chart for Diabetes Cases by Age)
+      div(
+        style = "width: 400px; height: 400px;",  # Set width and height for the first chart
+        div(
+          style = "font-weight: bold; text-align: center; margin: 0; padding: 10px 0; font-size: 17px;",  # Add padding to avoid overlap
+          "Diabetes Cases by Age"  # Title for the bar chart
+        ),
+        diabetes_chart  # Bar chart for Diabetes by Age
+      ),
+      # Second chart (Pie chart for Diabetes Cases by Gender)
+      div(
+        style = "width: 400px; height: 400px;",  # Set width and height for the second chart
+        div(
+          style = "font-weight: bold; text-align: center; margin: 0; padding: 10px 0; font-size: 17px;",  # Add padding to avoid overlap
+          "Diabetes Cases by Gender"  # Title for the pie chart
+        ),
+        gender_diabetes_pie_chart  # Pie chart for Diabetes by Gender
+      )
+    )
+  )
+)
+
+```
+- Highest prevalence in individuals aged 45–59, accounting for 33.9% of total cases.
+- The second highest prevalence is in the age group of 60–69, constituting 22.8%.
+- Gender distribution indicates a higher prevalence in males (55.97%) compared to females (44.03%), suggesting a significant gender disparity.
+<br>
+
+## Correlation Insights
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Factor = c("Abnormal WHR", "Elevated Blood Glucose", "Dyslipidemia", "High BMI", "Insufficient Diet and Exercise"),
+  Pearson_Correlation = c("0.979**", "0.952**", "0.979**", "0.980**", "0.981**"),
+  Sig_2_tailed = c("<0.001", "<0.001", "<0.001", "<0.001", "<0.001"),
+  N = rep(13, 5)
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Pearson Correlation Coefficients Between Diabetes and Influencing Factors"
+  ) %>%
+  cols_label(
+    Factor = "Factors",
+    Pearson_Correlation = "Pearson Correlation",
+    Sig_2_tailed = "Sig. (2-tailed)",
+    N = "N"
+  ) %>%
+  tab_source_note(
+    source_note = "Pearson correlation coefficients between diabetes and influencing factors."
+  )
+```
+- Strong correlation with **dyslipidemia**, **BMI**, and **poor diet/exercise**.
+- Weaker correlation with **elevated blood glucose** and **abnormal WHR**.
+<br> 
+
+## Regression Insights: Fixed vs Random Effects
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Variable = c("β₀ (Intercept)", "β₁ (Abnormal WHR)", "β₂ (Elevated Blood Glucose)", 
+               "β₃ (Dyslipidemia)", "β₄ (High BMI)", "β₅ (Insufficient Diet and Exercise)"),
+  Mean = c(0.046, 0.002, 0.008, 0.008, 0.002, -0.003),
+  Standard_Deviation = c(0.207, 0.007, 0.006, 0.011, 0.004, 0.003),
+  Credible_Interval = c("(-0.381, 0.436)", "(-0.011, 0.016)", "(-0.004, 0.019)", 
+                        "(-0.014, 0.030)", "(-0.006, 0.011)", "(-0.008, 0.002)")
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Bayesian Posterior Inference for the Fixed Effects in the Diabetes Model"
+  ) %>%
+  cols_label(
+    Variable = "Fixed Effect",
+    Mean = "Mean",
+    Standard_Deviation = "Standard Deviation",
+    Credible_Interval = "95% Credible Interval"
+  ) %>%
+  tab_source_note(
+    source_note = "Bayesian posterior inference for the fixed effects in the diabetes model."
+  )
+
+library(gt)
+
+# Create the data frame
+table_data <- data.frame(
+  Variable = c("τᵤ", "τᵥ"),
+  Mean = c(9.92, 22036.44),
+  Standard_Deviation = c(6.46, 24106.86),
+  Credible_Interval = c("(2.44, 26.69)", "(1473.44, 86045.78)")
+)
+
+# Render the table with gt
+table_data %>%
+  gt() %>%
+  tab_header(
+    title = "Bayesian Posterior Inference for the Random Effects in the Diabetes Model"
+  ) %>%
+  cols_label(
+    Variable = "Random Effect",
+    Mean = "Mean",
+    Standard_Deviation = "Standard Deviation",
+    Credible_Interval = "95% Credible Interval"
+  ) %>%
+  tab_source_note(
+    source_note = "Bayesian posterior inference for the random effects in the diabetes model."
+  )
+
+```
+- Positive but non-significant association with **abnormal WHR**, **elevated blood glucose**, and **dyslipidemia**.
+- Local factors more significant than geographic proximity in determining diabetes risk.
+<br> 
+
+## Risk Mapping and Statistical Insights
+```{r, echo=FALSE, warning=FALSE, message=FALSE, comment=NA, fig.width=12, fig.height=12}
+
+# Load the necessary libraries
+library(leaflet)
+library(dplyr)
+library(sf)
+library(rnaturalearth)
+
+# Define the data
+map_data <- data.frame(
+  name = c("Al Bahah", "Al Jawf", "Al Qassim", "Asir", "Eastern Province", 
+           "Ha'il", "Jazan", "Madinah", "Makkah", "Najran", 
+           "Northern Borders", "Riyadh", "Tabuk"),
+  RR = c(3.9124206, 0.7054240, 0.7775904, 1.2440027, 0.9586025, 
+         0.6217034, 0.8789209, 0.6136727, 1.0130544, 1.1888723, 
+         0.6522526, 1.0257210, 1.0190876),
+  EP = c(0.9999995812, 0.0363428253, 0.0230961909, 0.8107168262, 0.0680944281, 
+         0.0045105158, 0.0875673861, 0.0002221726, 0.1182955821, 0.5934219066, 
+         0.0296411917, 0.1539461439, 0.3256815848),
+  structured_effect = c(1.042330155, -0.378137622, -0.159831323, 0.274990220, 0.001125799, 
+                        -0.371859912, 0.124295371, -0.047432847, 0.350303145, 0.121362623, 
+                        -0.413673421, -0.109093635, -0.434268320),
+  unstructured_effect = c(6.151902e-04, 1.111757e-05, 1.198330e-05, -4.594934e-05, 1.872479e-04, 
+                          -2.781093e-04, -1.639213e-04, 1.807496e-04, 2.122470e-04, 
+                          6.445639e-05, -3.003219e-04, -2.820046e-04, -2.115819e-04)
+)
+
+# Get the map of Saudi Arabia using the 'rnaturalearth' package
+map <- ne_states(country = "Saudi Arabia", returnclass = "sf")
+
+# Adjust region names to match data
+map$name[1] = "Eastern Province"
+map$name[2] = "Northern Borders"
+map$name[3] = "Al Jawf"
+map$name[4] = "Najran"
+map$name[5] = "Asir"
+map$name[6] = "Jazan"
+map$name[7] = "Tabuk"
+map$name[8] = "Madinah"
+map$name[9] = "Makkah"
+map$name[10] = "Riyadh"
+map$name[11] = "Al Qassim"
+map$name[12] = "Ha'il"
+map$name[13] = "Al Bahah"
+
+# Set the correct projection
+map <- st_set_crs(map, 4326)
+
+# Merge the map data with the new data
+map <- left_join(map, map_data, by = c("name" = "name"))
+
+# Create custom color palettes for each variable
+palette_rr <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$RR,
+  na.color = "#D3D3D3"
+)
+
+palette_ep <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$EP,
+  na.color = "#D3D3D3"
+)
+
+palette_structured_effect <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$structured_effect,
+  na.color = "#D3D3D3"
+)
+
+palette_unstructured_effect <- colorNumeric(
+  palette = c("#f2f8fa", "#b4e0e2", "#88c4cd", "#73b2b5"),
+  domain = map$unstructured_effect,
+  na.color = "#D3D3D3"
+)
+
+# Function to create the interactive map
+# Function to create the interactive map without the legend
+create_map_no_legend <- function(variable, palette, title) {
+  leaflet(data = map) %>%
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addPolygons(
+      fillColor = ~palette(variable),
+      weight = 1,
+      opacity = 1,
+      color = "black",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+      label = ~paste0(title, ": ", round(variable, 2))
+    )
+}
+
+# Create maps for each variable without the legend
+map_rr_no_legend <- create_map_no_legend(map$RR, palette_rr, "RR")
+map_ep_no_legend <- create_map_no_legend(map$EP, palette_ep, "EP")
+map_structured_effect_no_legend <- create_map_no_legend(map$structured_effect, palette_structured_effect, "Structured Effect")
+map_unstructured_effect_no_legend <- create_map_no_legend(map$unstructured_effect, palette_unstructured_effect, "Unstructured Effect")
+
+# Combine the maps in a grid layout with titles centered above each map
+htmltools::browsable(
+  tagList(
+    div(
+      style = "display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 20px; justify-items: center; padding: 20px; max-width: 80%; box-sizing: border-box;",
+      # Title and map for RR
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "RR"),
+        div(style = "width: 100%; height: 100%;", map_rr_no_legend)
+      ),
+      # Title and map for EP
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "EP"),
+        div(style = "width: 100%; height: 100%;", map_ep_no_legend)
+      ),
+      # Title and map for Structured Effect
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Structured Effect"),
+        div(style = "width: 100%; height: 100%;", map_structured_effect_no_legend)
+      ),
+      # Title and map for Unstructured Effect
+      div(
+        style = "display: flex; flex-direction: column; align-items: center; width: 100%;",
+        div(style = "color: #4f6d7a; font-size: 18px; font-weight: bold; text-align: center; margin-bottom: 10px;", "Unstructured Effect"),
+        div(style = "width: 100%; height: 100%;", map_unstructured_effect_no_legend)
+      )
+    )
+  )
+)
+
+
+# cd ~/Desktop/web2/HealthDisparites
+# git init
+# git add .
+# git commit -m "first"
+# git push -u origin main
+
+```
+- **Al Bahah** shows high risk, while **Northern Borders** and **Riyadh** show lower risk.
+- **Ep**: Regions like **Makkah**, **Eastern Province**, and **Riyadh** may show clustering of high-risk areas.
+- **Structured random effects** show minimal spatial influence; **unstructured random effects** suggest local factors (e.g., lifestyle, diet) are more important.

@@ -1,0 +1,57 @@
+---
+output: html_document
+---
+
+
+<div style="display: flex; align-items: center; justify-content: flex-start;">
+   <!-- Title on the left, big and bolded -->
+   <h1 style="font-size: 35px; font-weight: bold; line-height: 150px; margin: 0;">
+     Exploring Health Disparities in Saudi Arabia
+   </h1>
+</div>
+
+
+# Problem of the Study
+
+Non-Communicable Diseases (NCDs) are a growing health challenge in Saudi Arabia, driven by a combination of biological, behavioral, and environmental factors. This study explores how these factors contribute to NCD prevalence, aiming to identify regional disparities and guide targeted health interventions. The findings will align with Vision 2030, which seeks to improve public health and reduce health inequalities.
+
+## NCDs in Saudi Arabia
+
+NCDs, including cardiovascular disease (CVD), diabetes, cancer, and chronic respiratory diseases, account for a significant portion of mortality in Saudi Arabia. Lifestyle changes, such as poor diet and physical inactivity, alongside biological risk factors like hypertension and obesity, are the primary drivers of these diseases. Understanding these factors is crucial for designing effective public health strategies.
+
+# Health Behaviors
+
+Health behaviors are pivotal in determining the prevalence of NCDs. Common behaviors contributing to NCDs include:
+
+- **Tobacco Use**: Smoking and the use of smokeless tobacco are prevalent, particularly among men and youth. Tobacco consumption is linked to a higher incidence of CVD, cancer, and respiratory diseases.
+- **Poor Diet**: Increased consumption of processed foods, sugary drinks, and high-fat diets is contributing to obesity, diabetes, and cardiovascular diseases. 
+- **Physical Inactivity**: Sedentary lifestyles are on the rise, contributing to obesity, diabetes, and other cardiovascular diseases. 
+
+# Biological Risk Factors
+
+Biological factors play a significant role in the development of NCDs, particularly through genetic predisposition and physical health conditions. Key biological risk factors include:
+
+- **Hypertension**: High blood pressure increases the risk of heart disease and stroke.
+- **Obesity**: Obesity is a major risk factor for diabetes, heart disease, and certain cancers.
+- **Cholesterol Levels**: High levels of cholesterol are linked to CVD and stroke.
+- **Genetic Factors**: Inherited conditions can predispose individuals to certain types of cancers, diabetes, and heart disease.
+
+# Environmental Risk Factors
+
+Environmental risks, particularly air pollution, are increasingly recognized as contributors to NCDs. These risks include:
+
+- **Air Pollution**: Industrialization and urbanization have led to higher levels of pollutants, which contribute to respiratory diseases and cardiovascular conditions.
+- **Urbanization**: Rapid urban growth can lead to increased sedentary behavior and exposure to pollutants, further exacerbating health risks.
+- **Climate Change**: Rising temperatures and extreme weather events may increase the incidence of heat-related illnesses and exacerbate respiratory conditions due to air pollution.
+
+# Research Objectives
+
+This study aims to:
+1. Identify the major biological, behavioral, and environmental factors contributing to NCD prevalence in Saudi Arabia.
+2. Examine regional variations in disease rates.
+3. Provide recommendations for targeted public health interventions to address NCDs.
+
+# Research Significance
+
+By identifying the underlying factors driving NCDs, this research will inform policies aimed at reducing health disparities and improving public health. It aligns with Vision 2030’s goal of improving healthcare systems and addressing regional health inequities.
+

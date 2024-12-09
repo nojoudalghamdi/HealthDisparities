@@ -1,0 +1,17 @@
+name: "my-website"
+navbar:
+  title: '<img src="noname.png" alt="GeoHealth" style="height: 100px; width: 100px;">' # Change height and width here to 150px or any size you prefer
+  left:
+    - text: "Background"
+      href: index.html
+    - text: "Diabetes"
+      href: about.html
+    - text: "Hypertension"
+      href: map.html
+    - text: "Stroke"
+      href: stroke.html
+output:
+  html_document:
+    theme: lumen
+    highlight: textmate
+    css: styles.css

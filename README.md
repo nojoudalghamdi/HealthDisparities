@@ -1,1 +1,1 @@
-# HealthDisparities
+# HealthDisparites
