@@ -517,10 +517,10 @@ htmltools::browsable(
 )
 
 
-# cd ~/Desktop/web2/HealthDisparites
+# cd ~/Desktop/a/nojoudalghamdi
 # git init
 # git add .
-# git commit -m "first"
+# git commit -m "second"
 # git push -u origin main
 
 ```
